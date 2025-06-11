@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Futures DCA Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c 0%, #2a4365 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        .section-card {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            color: #2d3748;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-title i {
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4f6af5;
+            box-shadow: 0 0 0 3px rgba(79, 106, 245, 0.15);
+        }
+
+        .form-group input.invalid {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .position-type {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .position-btn {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1.05rem;
+        }
+
+        .position-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .position-btn.active {
+            color: white;
+            border-color: transparent;
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .position-btn.long.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .position-btn.short.active {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .calculate-btn {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(135deg, #4f6af5 0%, #3b53d6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 106, 245, 0.3);
+        }
+
+        .reset-btn {
+            flex: 0.5;
+            padding: 16px;
+            background: #94a3b8;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .reset-btn:hover {
+            background: #64748b;
+            transform: translateY(-2px);
+        }
+
+        .results {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #0ea5e9;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-card h4 {
+            color: #0c4a6e;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0c4a6e;
+            text-align: right;
+        }
+
+        .result-value.positive {
+            color: #10b981;
+        }
+
+        .result-value.negative {
+            color: #ef4444;
+        }
+
+        .warning {
+            background: #fef3cd;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #065f46;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .positions-table {
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .table-header {
+            background: #1f2937;
+            color: white;
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h4 {
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+        }
+
+        .add-position-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-position-btn:hover {
+            background: #059669;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .edit-btn:hover {
+            background: #2563eb;
+        }
+
+        .position-cost {
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .section-card {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .position-type {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .position-btn {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .form-group input, .form-group select {
+                padding: 15px 16px;
+                font-size: 16px;
+            }
+            
+            .calculate-btn, .reset-btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+            
+            .results {
+                padding: 20px;
+            }
+            
+            .result-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 10px 0;
+            }
+            
+            .result-value {
+                font-size: 1.2rem;
+                font-weight: 800;
+                width: 100%;
+                text-align: left;
+            }
+            
+            .table-header {
+                padding: 15px;
+            }
+            
+            th, td {
+                padding: 12px 10px;
+                font-size: 14px;
+            }
+            
+            .entry-price, .position-size {
+                width: 100%;
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .add-position-btn {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .section-card, .results {
+                padding: 15px;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 350px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+
+        .publish-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border: 2px solid #cbd5e1;
+        }
+        
+        .publish-info h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .publish-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .step-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid #4f6af5;
+        }
+        
+        .step-number {
+            background: #4f6af5;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-calculator"></i> Enhanced Crypto Futures DCA Calculator</h1>
+            <p>Calculate exact amounts needed to average down your positions with advanced analytics</p>
+        </div>
+        
+        <div class="content">
+            <div class="calculator-grid">
+                <div class="section-card">
+                    <h3 class="section-title"><i class="fas fa-chart-line"></i> Position Details</h3>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-arrows-alt-h"></i> Position Type</label>
+                        <div class="position-type">
+                            <button class="position-btn long active" onclick="setPositionType('long')">
+                                <i class="fas fa-arrow-up"></i> LONG
+                            </button>
+                            <button class="position-btn short" onclick="setPositionType('short')">
+                                <i class="fas fa-arrow-down"></i> SHORT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentPrice"><i class="fas fa-dollar-sign"></i> Current Market Price ($)</label>
+                        <input type="number" id="currentPrice" step="0.01" placeholder="e.g., 45000.50" oninput="validateNumberInput(this)">
+                        <span class="input-hint">Current trading price of the asset</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="targetPrice"><i class="fas fa-bullseye"></i> Target Average Price ($)</label>
+                        <input type="number" id="targetPrice" step="0.01" placeholder="e.g., 42000.75" oninput="validateNumberInput(this)">
+                        <span class="input-hint">Desired average price after DCA</span>
+                    </div>
+
+                    <div class="positions-table">
+                        <div class="table-header">
+                            <h4><i class="fas fa-table"></i> Current Positions (Total: <span id="positionCount">0</span>)</h4>
+                            <button class="add-position-btn" onclick="addPosition()">
+                                <i class="fas fa-plus-circle"></i> Add Position
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table id="positionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Entry Price ($)</th>
+                                        <th>Size</th>
+                                        <th>Cost ($)</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="number" class="entry-price" step="0.01" placeholder="e.g., 48000.00" oninput="validateNumberInput(this)"></td>
+                                        <td><input type="number" class="position-size" step="0.01" placeholder="e.g., 0.5" oninput="validateNumberInput(this)"></td>
+                                        <td>-</td>
+                                        <td>
+                                            <button class="add-position-btn" onclick="addPosition()">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="calculate-btn" onclick="calculateDCA()">
+                            <i class="fas fa-calculator"></i> Calculate DCA
+                        </button>
+                        <button class="reset-btn" onclick="resetCalculator()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results">
+                    <h3 class="section-title"><i class="fas fa-chart-bar"></i> Calculation Results</h3>
+                    
+                    <div id="warningContainer"></div>
+                    
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h4><i class="fas fa-info-circle"></i> Current Position</h4>
+                            <div class="result-item">
+                                <span class="result-label">Average Price:</span>
+                                <span class="result-value" id="currentAverage">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Total Size:</span>
+                                <span class="result-value" id="currentTotalSize">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Total Investment:</span>
+                                <span class="result-value" id="currentTotalInvestment">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Current P&L:</span>
+                                <span class="result-value" id="currentPnL">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">P&L (%):</span>
+                                <span class="result-value" id="currentPnLPercent">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4><i class="fas fa-calculator"></i> After DCA</h4>
+                            <div class="result-item">
+                                <span class="result-label">Required Additional Size:</span>
+                                <span class="result-value" id="additionalSize">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Additional Investment:</span>
+                                <span class="result-value" id="additionalInvestment">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">New Average Price:</span>
+                                <span class="result-value" id="newAverage">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Total Position Size:</span>
+                                <span class="result-value" id="totalSize">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Total Investment:</span>
+                                <span class="result-value" id="totalInvestment">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4><i class="fas fa-chart-line"></i> Profit & Loss</h4>
+                            <div class="result-item">
+                                <span class="result-label">Current P&L:</span>
+                                <span class="result-value" id="currentPnLCopy">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">P&L After DCA:</span>
+                                <span class="result-value" id="pnlAfterDCA">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">P&L Improvement:</span>
+                                <span class="result-value" id="pnlImprovement">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Break-even Price:</span>
+                                <span class="result-value" id="breakEvenPrice">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4><i class="fas fa-percentage"></i> Returns</h4>
+                            <div class="result-item">
+                                <span class="result-label">Current ROI:</span>
+                                <span class="result-value" id="currentROI">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">ROI After DCA:</span>
+                                <span class="result-value" id="roiAfterDCA">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Required Price for Profit:</span>
+                                <span class="result-value" id="requiredProfitPrice">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alternative Strategies Section -->
+                    <div id="alternativeStrategies" style="display: none; margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 15px; border: 2px solid #0ea5e9;">
+                        <h4 class="section-title"><i class="fas fa-lightbulb"></i> Alternative DCA Strategies</h4>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h5 style="color: #1e40af; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-shield-alt"></i> 1. Conservative Gradual DCA
+                            </h5>
+                            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 3px 8px rgba(0,0,0,0.05);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span>Target Average:</span>
+                                    <span id="conservativeTarget" style="font-weight: 600;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span>Additional Size:</span>
+                                    <span id="conservativeSize" style="font-weight: 600;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Investment Needed:</span>
+                                    <span id="conservativeInvestment" style="font-weight: 600;">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h5 style="color: #1e40af; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-balance-scale"></i> 2. Proportional DCA (2x Original Position)
+                            </h5>
+                            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 3px 8px rgba(0,0,0,0.05);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span>Additional Size:</span>
+                                    <span id="proportionalSize" style="font-weight: 600;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span>New Average:</span>
+                                    <span id="proportionalAverage" style="font-weight: 600;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Investment Needed:</span>
+                                    <span id="proportionalInvestment" style="font-weight: 600;">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h5 style="color: #1e40af; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-dollar-sign"></i> 3. Fixed Dollar DCA
+                            </h5>
+                            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.05);">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-money-bill-wave"></i> Investment Amount ($):
+                                    </label>
+                                    <input type="number" id="fixedDollarAmount" placeholder="e.g., 1000" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;">
+                                </div>
+                                <button onclick="calculateFixedDollarDCA()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0 auto;">
+                                    <i class="fas fa-calculator"></i> Calculate
+                                </button>
+                                <div id="fixedDollarResults" style="margin-top: 20px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="publish-info">
+                <h3><i class="fas fa-cloud-upload-alt"></i> How to Publish This Calculator Online</h3>
+                <p>Follow these steps to make your calculator available on the web:</p>
+                
+                <div class="publish-steps">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h4>GitHub Pages</h4>
+                        <p>Create a GitHub account, make a new repository, upload this file as <code>index.html</code>, and enable GitHub Pages in settings.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h4>Netlify</h4>
+                        <p>Sign up at Netlify.com, drag and drop this HTML file to deploy, or connect your GitHub repository.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h4>Vercel</h4>
+                        <p>Create a Vercel account, import your project from GitHub or upload this file directly.</p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h4>Traditional Hosting</h4>
+                        <p>Upload via FTP to any web hosting service. Access at <code>yourdomain.com/filename.html</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let positionType = 'long';
+        let positions = [];
+
+        // Set position type (long/short)
+        function setPositionType(type) {
+            positionType = type;
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.position-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to selected button
+            const selectedBtn = document.querySelector(`.position-btn.${type}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+            }
+            
+            // Clear any existing results when position type changes
+            clearResults();
+        }
+
+        // Validate number inputs to prevent negative or invalid values
+        function validateNumberInput(input) {
+            const value = parseFloat(input.value);
+            if (input.value !== '' && (isNaN(value) || value <= 0)) {
+                input.classList.add('invalid');
+                return false;
+            }
+            input.classList.remove('invalid');
+            return true;
+        }
+
+        // Add a new position to the table
+        function addPosition() {
+            const entryPriceInputs = document.querySelectorAll('.entry-price');
+            const positionSizeInputs = document.querySelectorAll('.position-size');
+            
+            const lastEntryPrice = entryPriceInputs[entryPriceInputs.length - 1].value;
+            const lastPositionSize = positionSizeInputs[positionSizeInputs.length - 1].value;
+            
+            // Validate inputs
+            if (!lastEntryPrice || !lastPositionSize) {
+                showWarning('Please enter both entry price and position size.');
+                return;
+            }
+            
+            const entryPrice = parseFloat(lastEntryPrice);
+            const positionSize = parseFloat(lastPositionSize);
+            
+            if (isNaN(entryPrice) {
+                showWarning('Please enter a valid entry price.');
+                entryPriceInputs[entryPriceInputs.length - 1].focus();
+                return;
+            }
+            
+            if (isNaN(positionSize)) {
+                showWarning('Please enter a valid position size.');
+                positionSizeInputs[positionSizeInputs.length - 1].focus();
+                return;
+            }
+            
+            if (entryPrice <= 0) {
+                showWarning('Entry price must be a positive number.');
+                entryPriceInputs[entryPriceInputs.length - 1].focus();
+                return;
+            }
+            
+            if (positionSize <= 0) {
+                showWarning('Position size must be a positive number.');
+                positionSizeInputs[positionSizeInputs.length - 1].focus();
+                return;
+            }
+            
+            // Add position to array
+            positions.push({
+                entryPrice: entryPrice,
+                size: positionSize,
+                cost: entryPrice * positionSize
+            });
+            
+            // Clear the inputs
+            entryPriceInputs[entryPriceInputs.length - 1].value = '';
+            positionSizeInputs[positionSizeInputs.length - 1].value = '';
+            
+            // Update the table
+            updatePositionsTable();
+            
+            // Focus the entry price input in the new row
+            setTimeout(() => {
+                const newEntryInputs = document.querySelectorAll('.entry-price');
+                if (newEntryInputs.length > 0) {
+                    newEntryInputs[newEntryInputs.length - 1].focus();
+                }
+            }, 10);
+            
+            showSuccess(`Position added: $${entryPrice.toFixed(2)} @ ${positionSize.toFixed(4)}`);
+        }
+
+        // Remove a position from the table
+        function removePosition(index) {
+            const removed = positions.splice(index, 1)[0];
+            updatePositionsTable();
+            showSuccess(`Position removed: $${removed.entryPrice.toFixed(2)} @ ${removed.size.toFixed(4)}`);
+        }
+
+        // Update the positions table with current data
+        function updatePositionsTable() {
+            const tbody = document.querySelector('#positionsTable tbody');
+            tbody.innerHTML = '';
+            
+            // Add existing positions
+            positions.forEach((position, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${position.entryPrice.toFixed(2)}</td>
+                    <td>${position.size.toFixed(4)}</td>
+                    <td class="position-cost">$${(position.entryPrice * position.size).toFixed(2)}</td>
+                    <td class="action-cell">
+                        <button class="remove-btn" onclick="removePosition(${index})">
+                            <i class="fas fa-trash-alt"></i> Remove
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Add input row
+            const inputRow = document.createElement('tr');
+            inputRow.innerHTML = `
+                <td><input type="number" class="entry-price" step="0.01" placeholder="e.g., 48000.00" oninput="validateNumberInput(this)"></td>
+                <td><input type="number" class="position-size" step="0.01" placeholder="e.g., 0.5" oninput="validateNumberInput(this)"></td>
+                <td>-</td>
+                <td>
+                    <button class="add-position-btn" onclick="addPosition()">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(inputRow);
+            
+            // Update position count
+            document.getElementById('positionCount').textContent = positions.length;
+        }
+
+        // Main DCA calculation function
+        function calculateDCA() {
+            const currentPriceInput = document.getElementById('currentPrice');
+            const targetPriceInput = document.getElementById('targetPrice');
+            
+            const currentPrice = parseFloat(currentPriceInput.value);
+            const targetPrice = parseFloat(targetPriceInput.value);
+            
+            // Validate inputs
+            if (!validateNumberInput(currentPriceInput)) {
+                showWarning('Please enter a valid current market price.');
+                currentPriceInput.focus();
+                return;
+            }
+            
+            if (!validateNumberInput(targetPriceInput)) {
+                showWarning('Please enter a valid target average price.');
+                targetPriceInput.focus();
+                return;
+            }
+            
+            if (positions.length === 0) {
+                showWarning('Please add at least one position using the "Add Position" button.');
+                return;
+            }
+            
+            // Calculate current position totals
+            let totalSize = 0;
+            let totalCost = 0;
+            
+            positions.forEach(position => {
+                totalSize += position.size;
+                totalCost += position.entryPrice * position.size;
+            });
+            
+            const currentAverage = totalCost / totalSize;
+            
+            // Validate position type logic
+            if (positionType === 'long') {
+                if (currentPrice < currentAverage && (targetPrice <= currentPrice || targetPrice >= currentAverage)) {
+                    showWarning(`For LONG positions, target price should be between current price (${currentPrice.toFixed(2)}) and your current average (${currentAverage.toFixed(2)}).`);
+                    return;
+                }
+                if (currentPrice >= currentAverage && targetPrice <= currentAverage) {
+                    showWarning(`For LONG positions in profit, target price should be above your current average (${currentAverage.toFixed(2)}) to average up.`);
+                    return;
+                }
+            } else {
+                if (currentPrice > currentAverage && (targetPrice >= currentPrice || targetPrice <= currentAverage)) {
+                    showWarning(`For SHORT positions, target price should be between your current average (${currentAverage.toFixed(2)}) and current price (${currentPrice.toFixed(2)}).`);
+                    return;
+                }
+                if (currentPrice <= currentAverage && targetPrice >= currentAverage) {
+                    showWarning(`For SHORT positions in profit, target price should be below your current average (${currentAverage.toFixed(2)}) to average up.`);
+                    return;
+                }
+            }
+
+            // Check for division by zero
+            if (Math.abs(targetPrice - currentPrice) < 0.0001) {
+                showWarning('Target price is too close to current price. Cannot calculate.');
+                return;
+            }
+
+            // Calculate required additional size
+            let additionalSize;
+            if (positionType === 'long') {
+                additionalSize = (totalSize * (currentAverage - targetPrice)) / (targetPrice - currentPrice);
+            } else {
+                additionalSize = (totalSize * (targetPrice - currentAverage)) / (currentPrice - targetPrice);
+            }
+            
+            if (additionalSize < 0) {
+                showWarning('Cannot average to target price with current market conditions. Consider adjusting your target price.');
+                return;
+            }
+            
+            const additionalInvestment = additionalSize * currentPrice;
+            const newTotalSize = totalSize + additionalSize;
+            const newTotalCost = totalCost + additionalInvestment;
+            const newAveragePrice = newTotalCost / newTotalSize;
+            
+            // Calculate P&L
+            let currentPnL, pnlAfterDCA;
+            if (positionType === 'long') {
+                currentPnL = (currentPrice - currentAverage) * totalSize;
+                pnlAfterDCA = (currentPrice - newAveragePrice) * newTotalSize;
+            } else {
+                currentPnL = (currentAverage - currentPrice) * totalSize;
+                pnlAfterDCA = (newAveragePrice - currentPrice) * newTotalSize;
+            }
+            
+            // Calculate ROI and percentages
+            const currentPnLPercent = (currentPnL / totalCost) * 100;
+            const pnlAfterDCAPercent = (pnlAfterDCA / newTotalCost) * 100;
+            const pnlImprovement = pnlAfterDCA - currentPnL;
+            
+            // Calculate break-even and required profit prices
+            const breakEvenPrice = positionType === 'long' ? currentAverage : currentAverage;
+            const requiredProfitPrice = positionType === 'long' ? 
+                currentAverage * 1.05 :  // 5% above for long
+                currentAverage * 0.95;   // 5% below for short
+            
+            // Current ROI
+            const currentROI = (currentPnL / totalCost) * 100;
+            const roiAfterDCA = (pnlAfterDCA / newTotalCost) * 100;
+            
+            // Update current position results
+            document.getElementById('currentAverage').textContent = `$${currentAverage.toFixed(2)}`;
+            document.getElementById('currentTotalSize').textContent = totalSize.toFixed(4);
+            document.getElementById('currentTotalInvestment').textContent = `$${totalCost.toFixed(2)}`;
+            
+            // Update after DCA results
+            document.getElementById('additionalSize').textContent = additionalSize.toFixed(4);
+            document.getElementById('additionalInvestment').textContent = `$${additionalInvestment.toFixed(2)}`;
+            document.getElementById('newAverage').textContent = `$${newAveragePrice.toFixed(2)}`;
+            document.getElementById('totalSize').textContent = newTotalSize.toFixed(4);
+            document.getElementById('totalInvestment').textContent = `$${newTotalCost.toFixed(2)}`;
+            
+            // Update P&L results
+            const currentPnLElement = document.getElementById('currentPnL');
+            const currentPnLCopyElement = document.getElementById('currentPnLCopy');
+            const pnlAfterDCAElement = document.getElementById('pnlAfterDCA');
+            const pnlImprovementElement = document.getElementById('pnlImprovement');
+            
+            currentPnLElement.textContent = `$${currentPnL.toFixed(2)}`;
+            currentPnLElement.className = `result-value ${currentPnL >= 0 ? 'positive' : 'negative'}`;
+            
+            currentPnLCopyElement.textContent = `$${currentPnL.toFixed(2)}`;
+            currentPnLCopyElement.className = `result-value ${currentPnL >= 0 ? 'positive' : 'negative'}`;
+            
+            pnlAfterDCAElement.textContent = `$${pnlAfterDCA.toFixed(2)}`;
+            pnlAfterDCAElement.className = `result-value ${pnlAfterDCA >= 0 ? 'positive' : 'negative'}`;
+            
+            pnlImprovementElement.textContent = `$${pnlImprovement.toFixed(2)}`;
+            pnlImprovementElement.className = `result-value ${pnlImprovement >= 0 ? 'positive' : 'negative'}`;
+            
+            // Update percentages
+            document.getElementById('currentPnLPercent').textContent = `${currentPnLPercent.toFixed(2)}%`;
+            document.getElementById('currentPnLPercent').className = `result-value ${currentPnLPercent >= 0 ? 'positive' : 'negative'}`;
+            
+            document.getElementById('breakEvenPrice').textContent = `$${breakEvenPrice.toFixed(2)}`;
+            document.getElementById('requiredProfitPrice').textContent = `$${requiredProfitPrice.toFixed(2)}`;
+            
+            // Update ROI
+            document.getElementById('currentROI').textContent = `${currentROI.toFixed(2)}%`;
+            document.getElementById('currentROI').className = `result-value ${currentROI >= 0 ? 'positive' : 'negative'}`;
+            
+            document.getElementById('roiAfterDCA').textContent = `${roiAfterDCA.toFixed(2)}%`;
+            document.getElementById('roiAfterDCA').className = `result-value ${roiAfterDCA >= 0 ? 'positive' : 'negative'}`;
+            
+            clearWarning();
+            showSuccess('DCA calculation completed successfully!');
+            
+            // Show alternative strategies
+            showAlternativeStrategies(currentPrice, currentAverage, totalSize, totalCost);
+        }
+
+        // Show alternative DCA strategies
+        function showAlternativeStrategies(currentPrice, currentAverage, originalSize, originalCost) {
+            // Conservative DCA - target halfway between current average and current price
+            let conservativeTarget;
+            if (positionType === 'long') {
+                conservativeTarget = currentAverage > currentPrice ? 
+                    (currentAverage + currentPrice) / 2 : 
+                    (currentAverage + currentPrice) / 2;
+            } else {
+                conservativeTarget = currentAverage < currentPrice ? 
+                    (currentAverage + currentPrice) / 2 : 
+                    (currentAverage + currentPrice) / 2;
+            }
+            
+            // Calculate conservative DCA
+            let conservativeAdditionalSize;
+            if (positionType === 'long') {
+                conservativeAdditionalSize = (originalSize * (currentAverage - conservativeTarget)) / (conservativeTarget - currentPrice);
+            } else {
+                conservativeAdditionalSize = (originalSize * (conservativeTarget - currentAverage)) / (currentPrice - conservativeTarget);
+            }
+            
+            const conservativeInvestment = conservativeAdditionalSize > 0 ? conservativeAdditionalSize * currentPrice : 0;
+            
+            // Proportional DCA - 2x original position
+            const proportionalSize = originalSize * 2; // Double the original position
+            const proportionalInvestment = proportionalSize * currentPrice;
+            const proportionalNewCost = originalCost + proportionalInvestment;
+            const proportionalNewSize = originalSize + proportionalSize;
+            const proportionalAverage = proportionalNewCost / proportionalNewSize;
+            
+            // Update alternative strategies display
+            document.getElementById('conservativeTarget').textContent = `$${conservativeTarget.toFixed(2)}`;
+            document.getElementById('conservativeSize').textContent = conservativeAdditionalSize > 0 ? conservativeAdditionalSize.toFixed(4) : 'N/A';
+            document.getElementById('conservativeInvestment').textContent = conservativeAdditionalSize > 0 ? `$${conservativeInvestment.toFixed(2)}` : 'N/A';
+            
+            document.getElementById('proportionalSize').textContent = proportionalSize.toFixed(4);
+            document.getElementById('proportionalAverage').textContent = `$${proportionalAverage.toFixed(2)}`;
+            document.getElementById('proportionalInvestment').textContent = `$${proportionalInvestment.toFixed(2)}`;
+            
+            // Show the alternatives section
+            document.getElementById('alternativeStrategies').style.display = 'block';
+        }
+
+        // Calculate fixed dollar DCA strategy
+        function calculateFixedDollarDCA() {
+            const fixedAmountInput = document.getElementById('fixedDollarAmount');
+            const fixedAmount = parseFloat(fixedAmountInput.value);
+            const currentPrice = parseFloat(document.getElementById('currentPrice').value);
+            
+            if (!fixedAmount || fixedAmount <= 0) {
+                document.getElementById('fixedDollarResults').innerHTML = '<p style="color: #ef4444; padding: 10px; background: #fef2f2; border-radius: 8px;"><i class="fas fa-exclamation-circle"></i> Please enter a valid dollar amount</p>';
+                fixedAmountInput.focus();
+                return;
+            }
+            
+            // Calculate current totals
+            let totalSize = 0;
+            let totalCost = 0;
+            
+            positions.forEach(position => {
+                totalSize += position.size;
+                totalCost += position.entryPrice * position.size;
+            });
+            
+            const additionalSize = fixedAmount / currentPrice;
+            const newTotalSize = totalSize + additionalSize;
+            const newTotalCost = totalCost + fixedAmount;
+            const newAverage = newTotalCost / newTotalSize;
+            
+            // Calculate P&L after DCA
+            let pnlAfterDCA;
+            if (positionType === 'long') {
+                pnlAfterDCA = (currentPrice - newAverage) * newTotalSize;
+            } else {
+                pnlAfterDCA = (newAverage - currentPrice) * newTotalSize;
+            }
+            
+            const roiAfterDCA = (pnlAfterDCA / newTotalCost) * 100;
+            
+            document.getElementById('fixedDollarResults').innerHTML = `
+                <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Additional Size:</span>
+                        <span style="font-weight: 600;">${additionalSize.toFixed(4)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>New Average Price:</span>
+                        <span style="font-weight: 600;">$${newAverage.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Total Investment:</span>
+                        <span style="font-weight: 600;">$${newTotalCost.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>P&L After DCA:</span>
+                        <span style="font-weight: 600; color: ${pnlAfterDCA >= 0 ? '#10b981' : '#ef4444'}">$${pnlAfterDCA.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>ROI After DCA:</span>
+                        <span style="font-weight: 600; color: ${roiAfterDCA >= 0 ? '#10b981' : '#ef4444'}">${roiAfterDCA.toFixed(2)}%</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show warning message
+        function showWarning(message) {
+            const warningContainer = document.getElementById('warningContainer');
+            warningContainer.innerHTML = `<div class="warning"><i class="fas fa-exclamation-triangle"></i> ${message}</div>`;
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const warningContainer = document.getElementById('warningContainer');
+            warningContainer.innerHTML = `<div class="success"><i class="fas fa-check-circle"></i> ${message}</div>`;
+        }
+
+        // Clear warning/success messages
+        function clearWarning() {
+            document.getElementById('warningContainer').innerHTML = '';
+        }
+
+        // Clear all results
+        function clearResults() {
+            document.getElementById('currentAverage').textContent = '-';
+            document.getElementById('currentTotalSize').textContent = '-';
+            document.getElementById('currentTotalInvestment').textContent = '-';
+            document.getElementById('currentPnL').textContent = '-';
+            document.getElementById('currentPnLPercent').textContent = '-';
+            
+            document.getElementById('additionalSize').textContent = '-';
+            document.getElementById('additionalInvestment').textContent = '-';
+            document.getElementById('newAverage').textContent = '-';
+            document.getElementById('totalSize').textContent = '-';
+            document.getElementById('totalInvestment').textContent = '-';
+            
+            document.getElementById('currentPnLCopy').textContent = '-';
+            document.getElementById('pnlAfterDCA').textContent = '-';
+            document.getElementById('pnlImprovement').textContent = '-';
+            document.getElementById('breakEvenPrice').textContent = '-';
+            
+            document.getElementById('currentROI').textContent = '-';
+            document.getElementById('roiAfterDCA').textContent = '-';
+            document.getElementById('requiredProfitPrice').textContent = '-';
+            
+            // Reset classes
+            document.getElementById('currentPnL').className = 'result-value';
+            document.getElementById('currentPnLPercent').className = 'result-value';
+            document.getElementById('pnlAfterDCA').className = 'result-value';
+            document.getElementById('pnlImprovement').className = 'result-value';
+            document.getElementById('currentROI').className = 'result-value';
+            document.getElementById('roiAfterDCA').className = 'result-value';
+            
+            // Hide alternative strategies
+            document.getElementById('alternativeStrategies').style.display = 'none';
+            document.getElementById('fixedDollarResults').innerHTML = '';
+        }
+
+        // Reset the entire calculator
+        function resetCalculator() {
+            positions = [];
+            document.getElementById('currentPrice').value = '';
+            document.getElementById('targetPrice').value = '';
+            document.getElementById('fixedDollarAmount').value = '';
+            document.getElementById('fixedDollarResults').innerHTML = '';
+            updatePositionsTable();
+            clearResults();
+            clearWarning();
+            showSuccess('Calculator has been reset. You can start a new calculation.');
+        }
+
+        // Initialize with empty positions table
+        updatePositionsTable();
+        
+        // Add event listeners for better mobile interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const longBtn = document.querySelector('.position-btn.long');
+            const shortBtn = document.querySelector('.position-btn.short');
+            
+            if (longBtn) {
+                longBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setPositionType('long');
+                });
+            }
+            
+            if (shortBtn) {
+                shortBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setPositionType('short');
+                });
+            }
+            
+            // Focus first input
+            document.querySelector('.entry-price')?.focus();
+        });
+    </script>
+</body>
+</html>
